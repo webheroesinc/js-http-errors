@@ -1,6 +1,9 @@
 {
   "name": "@whi/http-errors",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "lib/index.js",
   "type": "module",
   "types": "lib/index.d.ts",
