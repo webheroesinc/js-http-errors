@@ -48,6 +48,27 @@ describe('HttpError', () => {
                 retry: false,
             });
         });
+
+        it('should include custom headers in response', async () => {
+            const error = new HttpError(401, 'Session expired', null, {
+                'Set-Cookie': 'session_id=; Max-Age=0; Path=/',
+            });
+            const response = error.toResponse();
+
+            expect(response.headers.get('content-type')).toBe('application/json');
+            expect(response.headers.get('Set-Cookie')).toBe(
+                'session_id=; Max-Age=0; Path=/'
+            );
+        });
+
+        it('should allow custom headers to override content-type', async () => {
+            const error = new HttpError(400, 'Bad request', null, {
+                'content-type': 'text/plain',
+            });
+            const response = error.toResponse();
+
+            expect(response.headers.get('content-type')).toBe('text/plain');
+        });
     });
 
     describe('fromResponse', () => {
@@ -142,5 +163,17 @@ describe('MissingFieldError', () => {
             error: 'Missing required field: username',
             field: 'username',
         });
+    });
+
+    it('should support custom headers', async () => {
+        const error = new MissingFieldError('session_token', {
+            'Set-Cookie': 'session_id=; Max-Age=0; Path=/',
+        });
+        const response = error.toResponse();
+
+        expect(response.status).toBe(400);
+        expect(response.headers.get('Set-Cookie')).toBe(
+            'session_id=; Max-Age=0; Path=/'
+        );
     });
 });

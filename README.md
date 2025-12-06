@@ -34,6 +34,14 @@ const detailedError = new HttpError(500, 'Database error', {
 
 const response2 = detailedError.toResponse();
 // Response body: { "error": "Database error", "code": "DB_CONNECTION_FAILED", "retry": true }
+
+// With custom response headers
+const authError = new HttpError(401, 'Session expired', null, {
+    'Set-Cookie': 'session_id=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/'
+});
+
+const response3 = authError.toResponse();
+// Response includes Set-Cookie header to clear the session
 ```
 
 ### MissingFieldError
@@ -72,13 +80,14 @@ if (!response.ok) {
 
 **Constructor:**
 ```typescript
-new HttpError(status: number, message: string, details?: Record<string, any>)
+new HttpError(status: number, message: string, details?: Record<string, any>, headers?: Record<string, string>)
 ```
 
 **Properties:**
 - `status: number` - HTTP status code
 - `message: string` - Error message
 - `details?: Record<string, any>` - Additional error details
+- `headers?: Record<string, string>` - Custom response headers
 
 **Methods:**
 - `toResponse(): Response` - Converts error to a JSON Response object
@@ -88,7 +97,7 @@ new HttpError(status: number, message: string, details?: Record<string, any>)
 
 **Constructor:**
 ```typescript
-new MissingFieldError(fieldName: string)
+new MissingFieldError(fieldName: string, headers?: Record<string, string>)
 ```
 
 Extends `HttpError` with status 400 and pre-formatted message.

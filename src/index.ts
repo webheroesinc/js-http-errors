@@ -6,7 +6,8 @@ export class HttpError extends Error {
     constructor(
         public readonly status: number,
         message: string,
-        public readonly details?: Record<string, any>
+        public readonly details?: Record<string, any>,
+        public readonly headers?: Record<string, string>
     ) {
         super(message);
         this.name = this.constructor.name;
@@ -19,7 +20,10 @@ export class HttpError extends Error {
         };
         return new Response(JSON.stringify(body), {
             status: this.status,
-            headers: { 'content-type': 'application/json' },
+            headers: {
+                'content-type': 'application/json',
+                ...(this.headers || {}),
+            },
         });
     }
 
@@ -65,7 +69,7 @@ export class HttpError extends Error {
  * MissingFieldError subclass for handling missing fields in POST body requests.
  */
 export class MissingFieldError extends HttpError {
-    constructor(fieldName: string) {
-        super(400, `Missing required field: ${fieldName}`, { field: fieldName });
+    constructor(fieldName: string, headers?: Record<string, string>) {
+        super(400, `Missing required field: ${fieldName}`, { field: fieldName }, headers);
     }
 }
