@@ -1,0 +1,7 @@
+node_modules/
+lib/
+docs/
+coverage/
+*.md
+*.json
+.claude/
