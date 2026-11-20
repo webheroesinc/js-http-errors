@@ -20,6 +20,13 @@ describe('HttpError', () => {
             expect(error.message).toBe('Not found');
             expect(error.details).toEqual(details);
         });
+
+        it('should treat null details the same as no details', () => {
+            const error = new HttpError(401, 'Session expired', null, { 'X-Test': '1' });
+
+            expect(error.details).toBeUndefined();
+            expect(error.headers).toEqual({ 'X-Test': '1' });
+        });
     });
 
     describe('toResponse', () => {
@@ -48,8 +55,6 @@ describe('HttpError', () => {
         });
 
         it('should include custom headers in response', async () => {
-            // @ts-expect-error -- the README documents null for 'no details', but the
-            // type only allows undefined. Remove once the type accepts null.
             const error = new HttpError(401, 'Session expired', null, {
                 'Set-Cookie': 'session_id=; Max-Age=0; Path=/',
             });
@@ -60,7 +65,6 @@ describe('HttpError', () => {
         });
 
         it('should allow custom headers to override content-type', async () => {
-            // @ts-expect-error -- see above: null should be accepted for 'no details'.
             const error = new HttpError(400, 'Bad request', null, {
                 'content-type': 'text/plain',
             });

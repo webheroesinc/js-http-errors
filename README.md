@@ -80,13 +80,13 @@ if (!response.ok) {
 
 **Constructor:**
 ```typescript
-new HttpError(status: number, message: string, details?: Record<string, any>, headers?: Record<string, string>)
+new HttpError(status: number, message: string, details?: Record<string, any> | null, headers?: Record<string, string>)
 ```
 
 **Properties:**
 - `status: number` - HTTP status code
 - `message: string` - Error message
-- `details?: Record<string, any>` - Additional error details
+- `details?: Record<string, any>` - Additional error details (`undefined` when none were given, including when `null` was passed)
 - `headers?: Record<string, string>` - Custom response headers
 
 **Methods:**

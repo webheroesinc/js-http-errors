@@ -3,14 +3,22 @@
  * These errors can be caught and transformed into appropriate HTTP responses.
  */
 export class HttpError extends Error {
+    public readonly details?: Record<string, any>;
+
+    /**
+     * @param details - Extra fields merged into the JSON body. Pass `null` or `undefined`
+     *   to send only `error`, e.g. when setting headers without details.
+     */
     constructor(
         public readonly status: number,
         message: string,
-        public readonly details?: Record<string, any>,
+        details?: Record<string, any> | null,
         public readonly headers?: Record<string, string>
     ) {
         super(message);
         this.name = this.constructor.name;
+        // Normalize so `details` reads the same however "no details" was passed
+        this.details = details ?? undefined;
     }
 
     toResponse(): Response {
