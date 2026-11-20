@@ -42,6 +42,14 @@ const authError = new HttpError(401, 'Session expired', null, {
 
 const response3 = authError.toResponse();
 // Response includes Set-Cookie header to clear the session
+
+// To send a header more than once (e.g. clear two cookies), pass name-value pairs
+// or a Headers object
+const signOutError = new HttpError(401, 'Signed out', null, [
+    ['Set-Cookie', 'session_id=; Max-Age=0; Path=/'],
+    ['Set-Cookie', 'refresh_token=; Max-Age=0; Path=/']
+]);
+// Response includes both Set-Cookie headers
 ```
 
 ### MissingFieldError
@@ -80,14 +88,14 @@ if (!response.ok) {
 
 **Constructor:**
 ```typescript
-new HttpError(status: number, message: string, details?: Record<string, any> | null, headers?: Record<string, string>)
+new HttpError(status: number, message: string, details?: Record<string, any> | null, headers?: HeadersInit)
 ```
 
 **Properties:**
 - `status: number` - HTTP status code
 - `message: string` - Error message
 - `details?: Record<string, any>` - Additional error details (`undefined` when none were given, including when `null` was passed)
-- `headers?: Record<string, string>` - Custom response headers
+- `headers?: HeadersInit` - Custom response headers, as given (a record, an array of name-value pairs, or a `Headers` object)
 
 **Methods:**
 - `toResponse(): Response` - Converts error to a JSON Response object
@@ -97,7 +105,7 @@ new HttpError(status: number, message: string, details?: Record<string, any> | n
 
 **Constructor:**
 ```typescript
-new MissingFieldError(fieldName: string, headers?: Record<string, string>)
+new MissingFieldError(fieldName: string, headers?: HeadersInit)
 ```
 
 Extends `HttpError` with status 400 and pre-formatted message.

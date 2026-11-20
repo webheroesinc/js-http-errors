@@ -72,6 +72,42 @@ describe('HttpError', () => {
 
             expect(response.headers.get('content-type')).toBe('text/plain');
         });
+
+        it('should send every Set-Cookie given as name-value pairs', async () => {
+            const error = new HttpError(401, 'Session expired', null, [
+                ['Set-Cookie', 'session=; Max-Age=0; Path=/'],
+                ['Set-Cookie', 'refresh=; Max-Age=0; Path=/'],
+            ]);
+            const response = error.toResponse();
+
+            expect(response.headers.getSetCookie()).toEqual([
+                'session=; Max-Age=0; Path=/',
+                'refresh=; Max-Age=0; Path=/',
+            ]);
+            expect(response.headers.get('content-type')).toBe('application/json');
+        });
+
+        it('should send every Set-Cookie given as a Headers object', async () => {
+            const headers = new Headers();
+            headers.append('Set-Cookie', 'session=; Max-Age=0; Path=/');
+            headers.append('Set-Cookie', 'refresh=; Max-Age=0; Path=/');
+            headers.set('X-Request-Id', 'abc');
+            const error = new HttpError(401, 'Session expired', null, headers);
+            const response = error.toResponse();
+
+            expect(response.headers.getSetCookie()).toEqual([
+                'session=; Max-Age=0; Path=/',
+                'refresh=; Max-Age=0; Path=/',
+            ]);
+            expect(response.headers.get('X-Request-Id')).toBe('abc');
+        });
+
+        it('should let name-value pairs override content-type', async () => {
+            const error = new HttpError(400, 'Bad request', null, [['Content-Type', 'text/plain']]);
+            const response = error.toResponse();
+
+            expect(response.headers.get('content-type')).toBe('text/plain');
+        });
     });
 
     describe('fromResponse', () => {
@@ -173,5 +209,14 @@ describe('MissingFieldError', () => {
 
         expect(response.status).toBe(400);
         expect(response.headers.get('Set-Cookie')).toBe('session_id=; Max-Age=0; Path=/');
+    });
+
+    it('should support repeated headers as name-value pairs', async () => {
+        const error = new MissingFieldError('session_token', [
+            ['Set-Cookie', 'session=; Max-Age=0; Path=/'],
+            ['Set-Cookie', 'refresh=; Max-Age=0; Path=/'],
+        ]);
+
+        expect(error.toResponse().headers.getSetCookie()).toHaveLength(2);
     });
 });
