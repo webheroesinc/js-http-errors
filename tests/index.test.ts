@@ -28,9 +28,7 @@ describe('HttpError', () => {
             const response = error.toResponse();
 
             expect(response.status).toBe(500);
-            expect(response.headers.get('content-type')).toBe(
-                'application/json'
-            );
+            expect(response.headers.get('content-type')).toBe('application/json');
 
             const body = await response.json();
             expect(body).toEqual({ error: 'Internal server error' });
@@ -50,18 +48,19 @@ describe('HttpError', () => {
         });
 
         it('should include custom headers in response', async () => {
+            // @ts-expect-error -- the README documents null for 'no details', but the
+            // type only allows undefined. Remove once the type accepts null.
             const error = new HttpError(401, 'Session expired', null, {
                 'Set-Cookie': 'session_id=; Max-Age=0; Path=/',
             });
             const response = error.toResponse();
 
             expect(response.headers.get('content-type')).toBe('application/json');
-            expect(response.headers.get('Set-Cookie')).toBe(
-                'session_id=; Max-Age=0; Path=/'
-            );
+            expect(response.headers.get('Set-Cookie')).toBe('session_id=; Max-Age=0; Path=/');
         });
 
         it('should allow custom headers to override content-type', async () => {
+            // @ts-expect-error -- see above: null should be accepted for 'no details'.
             const error = new HttpError(400, 'Bad request', null, {
                 'content-type': 'text/plain',
             });
@@ -125,13 +124,10 @@ describe('HttpError', () => {
         });
 
         it('should handle response without error field in JSON', async () => {
-            const response = new Response(
-                JSON.stringify({ code: 'INVALID', details: 'foo' }),
-                {
-                    status: 422,
-                    statusText: 'Unprocessable Entity',
-                }
-            );
+            const response = new Response(JSON.stringify({ code: 'INVALID', details: 'foo' }), {
+                status: 422,
+                statusText: 'Unprocessable Entity',
+            });
 
             const error = await HttpError.fromResponse(response);
 
@@ -172,8 +168,6 @@ describe('MissingFieldError', () => {
         const response = error.toResponse();
 
         expect(response.status).toBe(400);
-        expect(response.headers.get('Set-Cookie')).toBe(
-            'session_id=; Max-Age=0; Path=/'
-        );
+        expect(response.headers.get('Set-Cookie')).toBe('session_id=; Max-Age=0; Path=/');
     });
 });

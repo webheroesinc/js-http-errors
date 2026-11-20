@@ -110,6 +110,16 @@ Perfect for:
 - **API Routes** - Standardized error handling for fetch-based applications
 - **Service Workers** - Consistent error responses in PWAs
 
+## Documentation
+
+**https://webheroesinc.github.io/js-http-errors/**
+
+API documentation is generated from the source using TypeDoc and published with each release.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and the release process.
+
 ## License
 
 LGPL-3.0
