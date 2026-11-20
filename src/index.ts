@@ -3,14 +3,32 @@
  * These errors can be caught and transformed into appropriate HTTP responses.
  */
 export class HttpError extends Error {
+    public readonly details?: Record<string, any>;
+
+    /**
+     * @param details - Extra fields merged into the JSON body. Pass `null` or `undefined`
+     *   to send only `error`, e.g. when setting headers without details.
+     * @param headers - Response headers, in any form `fetch` accepts. Use an array of
+     *   name-value pairs or a `Headers` object to send a header more than once:
+     *
+     * @example
+     * ```ts
+     * new HttpError(401, 'Session expired', null, [
+     *     ['Set-Cookie', 'session=; Max-Age=0; Path=/'],
+     *     ['Set-Cookie', 'refresh=; Max-Age=0; Path=/'],
+     * ]);
+     * ```
+     */
     constructor(
         public readonly status: number,
         message: string,
-        public readonly details?: Record<string, any>,
-        public readonly headers?: Record<string, string>
+        details?: Record<string, any> | null,
+        public readonly headers?: HeadersInit
     ) {
         super(message);
         this.name = this.constructor.name;
+        // Normalize so `details` reads the same however "no details" was passed
+        this.details = details ?? undefined;
     }
 
     toResponse(): Response {
@@ -18,12 +36,22 @@ export class HttpError extends Error {
             error: this.message,
             ...(this.details || {}),
         };
+        const headers = new Headers({ 'content-type': 'application/json' });
+        // The first value for a name replaces any default (so content-type can be
+        // overridden); repeats are appended, so every Set-Cookie is sent.
+        const seen = new Set<string>();
+        for (const [name, value] of headerPairs(this.headers)) {
+            const key = name.toLowerCase();
+            if (seen.has(key)) {
+                headers.append(name, value);
+            } else {
+                headers.set(name, value);
+                seen.add(key);
+            }
+        }
         return new Response(JSON.stringify(body), {
             status: this.status,
-            headers: {
-                'content-type': 'application/json',
-                ...(this.headers || {}),
-            },
+            headers,
         });
     }
 
@@ -69,7 +97,33 @@ export class HttpError extends Error {
  * MissingFieldError subclass for handling missing fields in POST body requests.
  */
 export class MissingFieldError extends HttpError {
-    constructor(fieldName: string, headers?: Record<string, string>) {
+    constructor(fieldName: string, headers?: HeadersInit) {
         super(400, `Missing required field: ${fieldName}`, { field: fieldName }, headers);
     }
+}
+
+/**
+ * Flatten any HeadersInit into name-value pairs, keeping each Set-Cookie separate.
+ * Iterating a Headers object directly would join repeated values into one.
+ */
+function headerPairs(init?: HeadersInit): [string, string][] {
+    if (!init) {
+        return [];
+    }
+    if (init instanceof Headers) {
+        const pairs: [string, string][] = [];
+        init.forEach((value, name) => {
+            if (name !== 'set-cookie') {
+                pairs.push([name, value]);
+            }
+        });
+        for (const cookie of init.getSetCookie()) {
+            pairs.push(['set-cookie', cookie]);
+        }
+        return pairs;
+    }
+    if (Array.isArray(init)) {
+        return init.map(([name, value]) => [name, value]);
+    }
+    return Object.entries(init);
 }
